@@ -154,8 +154,7 @@ var windowListener = {
 		if (!aDOMWindow) { return }
 		
 		if (aDOMWindow.gBrowser) {
-			var domWinUtils = aDOMWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-			domWinUtils.removeSheet(cui_cssUri, domWinUtils.AUTHOR_SHEET);
+			
 		}
 	}
 };
@@ -167,6 +166,7 @@ function uninstall() {
 	// delete imgur history file
 }
 
+const frameScriptURL = core.addon.path.scripts + '_framescript-warn-on-submit.js?' + Math.random(); /* Randomize URI to work around bug 719376 */
 function startup(aData, aReason) {
 	// core.addon.aData = aData;
 	extendCore();
@@ -176,7 +176,7 @@ function startup(aData, aReason) {
 	//end windowlistener more
 	
 	var globalMM = Cc['@mozilla.org/globalmessagemanager;1'].getService(Ci.nsIMessageListenerManager);
-	globalMM.loadFrameScript(core.addon.path.scripts + '_framescript-warn-on-submit.js', true);
+	globalMM.loadFrameScript(frameScriptURL, true);
 
 }
 
@@ -187,6 +187,11 @@ function shutdown(aData, aReason) {
 	windowListener.unregister();
 	//end windowlistener more
 
+	var globalMM = Cc['@mozilla.org/globalmessagemanager;1'].getService(Ci.nsIMessageListenerManager);
+	globalMM.removeDelayedFrameScript(frameScriptURL);
+	globalMM.broadcastAsyncMessage(core.addon.id, {aTopic:'uninit'});
+	
+	// an issue with this unload is that framescripts are left over, i want to destory them eventually
 }
 
 // start - common helper functions
