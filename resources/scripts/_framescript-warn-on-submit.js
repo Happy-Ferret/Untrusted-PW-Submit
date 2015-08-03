@@ -56,6 +56,11 @@ const fsComClient = {
 		fsComClient.loadIntoFrame(aContentWindow);
 	},
 	uninit: function() {
+		
+		if (fsComClient.devuserRequestingAllSubFrames) {
+			removeEventListener('DOMContentLoaded', fsComClient.addEventListener_Helper_toConvertFrom_aEvent_to_aContentWindow_for_loadIntoFrame, false);
+		}
+		
 		var frameContentWindowCollection = [content];
 		if (fsComClient.devuserRequestingAllSubFrames) {
 			// then collect all sub contentframes windows so can run unloadFromFrame on all of them
@@ -125,7 +130,7 @@ console.error('THIS:', this);
 function doBorderOnBody(aContentWindow) {
 	var aContentDocument = aContentWindow.document;
 	if (aContentDocument.body) {
-		aContentDocument.body.style.border = '5px solid steelblue';
+		aContentDocument.body.style.border = '5px solid yellow';
 		console.error('bordered it', aContentDocument.defaultView.location.href);
 	} else {
 		console.error('has not aContentDocument.body', aContentDocument.defaultView.location.href);

@@ -170,7 +170,10 @@ const fsComServer = {
 	unregistering: false,
 	register: function(aFsUrl) {
 		// currently set up to take only one framescript url
-		
+		if (fsComServer.registered) {
+			console.warn('already registered, returning');
+			return;
+		}
 		if (aFsUrl) {
 			// devuser passed
 			fsComServer.devuserSpecifiedFsUrl = aFsUrl;
@@ -180,6 +183,7 @@ const fsComServer = {
 		if (!fsComServer.serverListenerInited) {
 			fsComServer.serverListenerInited = true;
 			Services.mm.addMessageListener(core.addon.id, fsComServer.clientMessageListener);
+			console.error('OK REGISTERED MM CML');
 		}
 		try {
 			var isUnregistering = Services.prefs.getBoolPref('fsCom.unregistering.' + core.addon.id);
@@ -192,7 +196,7 @@ const fsComServer = {
 		}
 		
 		fsComServer.registered = true;
-		fsComServer.fsUrl = fsComServer.devuserSpecifiedFsUrl + '?' + Math.random(); /* Randomize URI to work around bug ???? - otherwise it will be a cached version*/
+		fsComServer.fsUrl = fsComServer.devuserSpecifiedFsUrl + '?' + Math.random(); /* Randomize URI to work around bug 1051238 - otherwise it will be a cached version*/
 		Services.mm.loadFrameScript(fsComServer.fsUrl, true);
 	},
 	unregister: function() {
@@ -213,7 +217,7 @@ const fsComServer = {
 			console.error('OK YAY ALL CLIENTS HAVE BEEN UNINITALIZED');
 			Services.prefs.clearUserPref('fsCom.unregistering.' + core.addon.id, false);
 			Services.mm.removeMessageListener(core.addon.id, fsComServer.clientMessageListener);
-			Services.mm.broadcastAsyncMessage(core.addon.id, {aTopic:'serverRequest_toUpdatedServer_unregisterCompleted'});
+			Services.cpmm.sendAsyncMessage(core.addon.id, {aTopic:'serverRequest_toUpdatedServer_unregisterCompleted'});
 		} else {
 			console.warn('some more aArrClientIds are left for unregistration:', fsComServer.aArrClientIds);
 		}
@@ -252,7 +256,7 @@ const fsComServer = {
 						console.error('SERVER unrecognized aTopic:', aMsg.json.aTopic, aMsg, 'server id:', fsComServer.id);
 				}
 			} else {
-				console.warn('incoming message to server but it has an id and it is not of this so ignore it', 'this server id:', fsComServer.id, 'msg target server is:', aMsg.json.serverId)
+				console.warn('incoming message to server but it has an id and it is not of this so ignore it', 'this server id:', fsComServer.id, 'msg target server is:', aMsg.json.serverId, 'aMsg:', aMsg);
 			}
 		}
 	}
